@@ -1,9 +1,10 @@
 {
   "$schema": "../node_modules/@angular-devkit/schematics/collection-schema.json",
   "schematics": {
-    "igniteui-angular-schematics": {
-      "description": "A blank schematic.",
-      "factory": "./igniteui-angular-schematics/index#igniteuiAngularSchematics"
+    "ng-new": {
+      "description": "New Ignite UI for Angular project",
+      "factory": "./ng-new/index#newProject",
+      "schema": "./ng-new/schema.json"
     }
   }
 }

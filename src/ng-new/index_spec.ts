@@ -9,7 +9,7 @@ const collectionPath = path.join(__dirname, '../collection.json');
 describe('igniteui-angular-schematics', () => {
   it('works', () => {
     const runner = new SchematicTestRunner('schematics', collectionPath);
-    const tree = runner.runSchematic('igniteui-angular-schematics', {}, Tree.empty());
+    const tree = runner.runSchematic('ng-new', {}, Tree.empty());
 
     expect(tree.files).toEqual([]);
   });
