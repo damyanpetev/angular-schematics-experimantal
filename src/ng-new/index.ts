@@ -10,6 +10,7 @@ import { Observable, defer } from 'rxjs';
 // import projectSchematic from '../app-projects'
 
 interface IgxSchematicContext extends SchematicContext {
+  projectTpe: string;
   theme: string;
 }
 
@@ -17,7 +18,7 @@ interface IgxSchematicContext extends SchematicContext {
 // You don't have to export the function as default. You can also have more than one rule factory
 // per file.
 export function newProject(options: OptionsSchema): Rule {
-  return (tree: Tree, context: IgxSchematicContext) => {
+  return (_host: Tree, context: IgxSchematicContext) => {
     context.logger.info(`Generating ${options.name}`);
 
     
@@ -34,6 +35,14 @@ export function newProject(options: OptionsSchema): Rule {
             name: 'theme',
             type: 'list'
           })).theme;
+          const projectType = (await inquirer.prompt<{projectType: string}>({
+            choices: ['Empty', 'Side navigation', 'Authentication with Side navigation'],
+            default: 'Side navigation',
+            message: 'Choose the projectType for the project:',
+            name: 'projectType',
+            type: 'list'
+          })).projectType;
+          context.projectTpe = projectType;
           context.theme = theme;
           context.logger.info('');
           tree.create(`${options.name}/ignite-ui-cli.json`, JSON.stringify({ tree: 'override me' }));
@@ -58,6 +67,18 @@ export function newProject(options: OptionsSchema): Rule {
         ]), MergeStrategy.Overwrite
       ),
       (tree: Tree, context: IgxSchematicContext) => {
+        context.engine.executePostTasks()
+        return defer<Tree>(async function() {
+          const test = (await inquirer.prompt<{test: string}>({
+            message: 'Iz dis after install?',
+            name: 'test',
+            type: 'confirm'
+          })).test;
+          context.logger.info('' + test);
+          return tree;
+        });
+      },
+      (tree: Tree, context: IgxSchematicContext) => {
         if (false) {
           const installTask = context.addTask(new NodePackageInstallTask(options.name));
           context.addTask(
@@ -65,9 +86,10 @@ export function newProject(options: OptionsSchema): Rule {
             installTask ? [installTask] : [],
           );
         }
+        context.addTask(
+          new RepositoryInitializerTask( options.name ));
         return tree;
       }
-    ])
-    return tree;
+    ]);
   };
 }
