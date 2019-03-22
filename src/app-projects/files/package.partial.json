@@ -1,0 +1,12 @@
+{
+    "dependencies": {
+        "hammerjs": "^2.0.8",
+        "igniteui-angular": "7.2.0",
+        "jszip": "^3.1.5",
+        "minireset.css": "~0.0.4",
+        "web-animations-js": "^2.3.1"
+    },
+    "devDependencies": {
+        "@types/hammerjs": "^2.0.35"
+    }
+}

@@ -5,6 +5,10 @@
       "description": "New Ignite UI for Angular project",
       "factory": "./ng-new/index#newProject",
       "schema": "./ng-new/schema.json"
+    },
+    "app-projects": {
+      "description": "A schematic using a source and a schema to validate options.",
+      "factory": "./app-projects"
     }
   }
 }

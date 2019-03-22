@@ -1,4 +1,4 @@
-import { Rule, SchematicContext, Tree, chain, externalSchematic, mergeWith, apply, empty, move, applyTemplates } from '@angular-devkit/schematics';
+import { Rule, SchematicContext, Tree, chain, externalSchematic, mergeWith, apply, empty, move, MergeStrategy, schematic } from '@angular-devkit/schematics';
 import { OptionsSchema } from './schema';
 import {
   NodePackageInstallTask,
@@ -7,6 +7,7 @@ import {
 import * as inquirer from 'inquirer';
 import { Observable, defer } from 'rxjs';
 // import { } from '@schematics/angular'; // TODO add as DEV dep for workspace/application options schema?
+// import projectSchematic from '../app-projects'
 
 interface IgxSchematicContext extends SchematicContext {
   theme: string;
@@ -16,7 +17,7 @@ interface IgxSchematicContext extends SchematicContext {
 // You don't have to export the function as default. You can also have more than one rule factory
 // per file.
 export function newProject(options: OptionsSchema): Rule {
-  return (tree: Tree, context: SchematicContext) => {
+  return (tree: Tree, context: IgxSchematicContext) => {
     context.logger.info(`Generating ${options.name}`);
 
     
@@ -35,6 +36,7 @@ export function newProject(options: OptionsSchema): Rule {
           })).theme;
           context.theme = theme;
           context.logger.info('');
+          tree.create(`${options.name}/ignite-ui-cli.json`, JSON.stringify({ tree: 'override me' }));
           return tree;
         });
       },
@@ -42,14 +44,18 @@ export function newProject(options: OptionsSchema): Rule {
       mergeWith(
         apply(empty(), [
           externalSchematic('@schematics/angular', 'workspace', { name: options.name }),
-          externalSchematic('@schematics/angular','application', { projectRoot: '', name: options.name, skipInstall: true}),
-          applyTemplates({}),
+          externalSchematic('@schematics/angular','application', { projectRoot: '', name: options.name, skipInstall: true, routing: true, style: 'scss'}),
+          (_tree: Tree, context: IgxSchematicContext) => {
+            // extend project entry point:
+            return schematic('app-projects', { theme: context.theme});
+          },
+          // schematic('app-projects', { theme: context.theme}),
           (tree: Tree, context: IgxSchematicContext) => {
             // extend project entry point:
             tree.create("ignite-ui-cli.json", JSON.stringify({ theme: context.theme }));
           },
           move(options.name),
-        ]),
+        ]), MergeStrategy.Overwrite
       ),
       (tree: Tree, context: IgxSchematicContext) => {
         if (false) {
