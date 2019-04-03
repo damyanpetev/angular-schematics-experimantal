@@ -4,8 +4,8 @@ import {
   NodePackageInstallTask,
   RepositoryInitializerTask,
 } from '@angular-devkit/schematics/tasks';
-import * as inquirer from 'inquirer';
 import { Observable, defer } from 'rxjs';
+import { PromptSession } from '../cli-utils/prompt';
 // import { } from '@schematics/angular'; // TODO add as DEV dep for workspace/application options schema?
 // import projectSchematic from '../app-projects'
 
@@ -28,20 +28,20 @@ export function newProject(options: OptionsSchema): Rule {
         // https://medium.com/rocket-fuel/angular-schematics-asynchronous-schematics-dc998c0b6fba
         // https://medium.com/@benlesh/rxjs-observable-interop-with-promises-and-async-await-bebb05306875
         return defer<Tree>(async function() {
-          const theme = (await inquirer.prompt<{theme: string}>({
-            choices: ['Custom', 'Default'],
-            default: 'Custom',
-            message: 'Choose the theme for the project:',
-            name: 'theme',
-            type: 'list'
-          })).theme;
-          const projectType = (await inquirer.prompt<{projectType: string}>({
-            choices: ['Empty', 'Side navigation', 'Authentication with Side navigation'],
-            default: 'Side navigation',
-            message: 'Choose the projectType for the project:',
-            name: 'projectType',
-            type: 'list'
-          })).projectType;
+          const prompt = new PromptSession();
+          const theme = await prompt.getUserInput({
+            type: "list",
+            name: "theme",
+            message: "Choose the theme for the project:",
+            choices: ['Custom', 'Default'], //projectLibrary.themes,
+            default: 'Custom' //projectLibrary.themes[0]
+          });
+          const projectType = await prompt.getUserInput({
+            type: "list",
+            name: "projectType",
+            message: "Choose the type of project:",
+            choices: ['Empty', 'Side navigation', 'Authentication with Side navigation'] //projectLibraries
+          });
           context.projectTpe = projectType;
           context.theme = theme;
           context.logger.info('');
@@ -69,11 +69,12 @@ export function newProject(options: OptionsSchema): Rule {
       (tree: Tree, context: IgxSchematicContext) => {
         context.engine.executePostTasks()
         return defer<Tree>(async function() {
-          const test = (await inquirer.prompt<{test: string}>({
-            message: 'Iz dis after install?',
+          const prompt = new PromptSession();
+          const test = await prompt.getUserInput({
             name: 'test',
-            type: 'confirm'
-          })).test;
+            type: 'confirm',
+            message: 'Iz dis after install?'
+          });
           context.logger.info('' + test);
           return tree;
         });
