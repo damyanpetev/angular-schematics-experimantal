@@ -3,7 +3,7 @@ import { BaseComponent } from "../lib/BaseComponent";
 import { Util } from "../lib/Util";
 
 
-export function formatOutput(items: Array<Template | Component | ComponentGroup>): Array<{ name: string, value: string, short: string }> {
+export function formatChoices(items: Array<Template | Component | ComponentGroup>): Array<{ name: string, value: string, short: string }> {
     const choiceItems = [];
     const leftPadding = 2;
     const rightPadding = 1;

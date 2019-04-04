@@ -6,6 +6,9 @@ import {
 } from '@angular-devkit/schematics/tasks';
 import { Observable, defer } from 'rxjs';
 import { PromptSession } from '../cli-utils/prompt';
+import { BaseProjectLibrary } from '../types/project-library';
+import { formatChoices } from '../cli-utils/formatting';
+import { Template } from '../types';
 // import { } from '@schematics/angular'; // TODO add as DEV dep for workspace/application options schema?
 // import projectSchematic from '../app-projects'
 
@@ -21,7 +24,21 @@ export function newProject(options: OptionsSchema): Rule {
   return (_host: Tree, context: IgxSchematicContext) => {
     context.logger.info(`Generating ${options.name}`);
 
-    
+    const projectLibrary = new BaseProjectLibrary();
+    projectLibrary.projects.push(
+      {
+        name: "Empty",
+        description: "Project structure with routing and a home page"
+      } as Template,
+      {
+        name: "Side navigation",
+        description: "Project structure with side navigation drawer"
+      } as Template,
+      {
+        name: "Authentication with Side navigation",
+        description: "Side navigation extended with user authentication module"
+      } as Template
+    )
 
     return chain([
       (tree: Tree, context: IgxSchematicContext): Observable<Tree> => {
@@ -38,10 +55,12 @@ export function newProject(options: OptionsSchema): Rule {
           });
           const projectType = await prompt.getUserInput({
             type: "list",
-            name: "projectType",
-            message: "Choose the type of project:",
-            choices: ['Empty', 'Side navigation', 'Authentication with Side navigation'] //projectLibraries
+            name: "projTemplate",
+            message: "Choose project template:",
+            choices: formatChoices(projectLibrary.projects)
           });
+          context.logger.info(projectType);
+          // projTemplate = projectLibrary.projects.find(x => x.name === projectType);
           context.projectTpe = projectType;
           context.theme = theme;
           context.logger.info('');
