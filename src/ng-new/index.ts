@@ -87,6 +87,7 @@ export function newProject(options: OptionsSchema): Rule {
       ),
       (tree: Tree, context: IgxSchematicContext) => {
         context.engine.executePostTasks()
+        // tree.commitUpdate();
         return defer<Tree>(async function() {
           const prompt = new PromptSession();
           const test = await prompt.getUserInput({
@@ -113,3 +114,63 @@ export function newProject(options: OptionsSchema): Rule {
     ]);
   };
 }
+
+export function chooseActionLoop(options: OptionsSchema): Rule {
+  return (tree: Tree, context: IgxSchematicContext) => {
+    return defer<Tree>(async function() {
+      const prompt = new PromptSession();
+      let actionIsOver = false;
+      while (!actionIsOver) {
+        const actionChoices: Array<{}> = prompt.generateActionChoices(options.projectLibrary);
+        Util.log(""); /* new line */
+        const action: string = await prompt.getUserInput({
+          type: "list",
+          name: "action",
+          message: "Choose an action:",
+          choices: actionChoices,
+          default: "Complete & Run"
+        });
+    
+        switch (action) {
+          case "Add component": {
+            actionIsOver = await prompt.addComponent(options.projectLibrary, options.theme);
+            options.rulesChain.push(schematic("component"), {/*options.projectLibrary, options.theme*/});
+            break;
+          }
+          case "Add scenario": {
+            actionIsOver = await prompt.addView(options.projectLibrary, options.theme);
+            options.rulesChain.push(schematic("component"), {/*options.projectLibrary, options.theme*/});
+            break;
+          }
+          case "Complete & Run":
+            const config = ProjectConfig.localConfig();
+            const defaultPort = config.project.defaultPort;
+            let port;
+            let userPort: boolean;
+            while (!userPort) {
+              // tslint:disable-next-line:prefer-const
+              port = await prompt.getUserInput({
+                default: defaultPort,
+                message: "Choose app host port:",
+                name: "port",
+                type: "input"
+              });
+    
+              if (!Number(port)) {
+                Util.log(`port should be a number. Input valid port or use the suggested default port`, "yellow");
+              } else {
+                userPort = true;
+                config.project.defaultPort = port;
+                ProjectConfig.setConfig(config);
+              }
+            }
+          default: {
+            break;
+          }
+        }
+      }
+      return tree;
+    });
+  }
+};
+
