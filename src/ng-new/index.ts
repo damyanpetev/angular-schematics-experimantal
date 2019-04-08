@@ -6,9 +6,9 @@ import {
 } from '@angular-devkit/schematics/tasks';
 import { Observable, defer } from 'rxjs';
 import { PromptSession } from '../cli-utils/prompt';
-import { BaseProjectLibrary } from '../types/project-library';
+import { BaseProjectLibrary, ProjectLibrary } from '../types/project-library';
 import { formatChoices } from '../cli-utils/formatting';
-import { Template } from '../types';
+import { Template, Component } from '../types';
 // import { } from '@schematics/angular'; // TODO add as DEV dep for workspace/application options schema?
 // import projectSchematic from '../app-projects'
 
@@ -25,6 +25,7 @@ export function newProject(options: OptionsSchema): Rule {
     context.logger.info(`Generating ${options.name}`);
 
     const projectLibrary = new BaseProjectLibrary();
+    //#region test setup
     projectLibrary.projects.push(
       {
         name: "Empty",
@@ -38,7 +39,45 @@ export function newProject(options: OptionsSchema): Rule {
         name: "Authentication with Side navigation",
         description: "Side navigation extended with user authentication module"
       } as Template
-    )
+    );
+    const gridTemplate: Template = {
+      id: "grid",
+      name: "Grid",
+      components: ["Grid"],
+      controlGroup: "Grids & Lists",
+      description: "basic IgxGrid"
+
+    } as Template;
+    const editGridTemplate: Template = {
+      id: "grid-edit",
+      name: "Edit Grid",
+      components: ["Grid"],
+      controlGroup: "Grids & Lists",
+      description: "Editing IgxGrid"
+
+    } as Template;
+    const gridComponent: Component = {
+      name: "Grid",
+      group: "Grids & Lists",
+      description: "pick from grids: basic or custom",
+      groupPriority: 10,
+      templates: []
+    };
+
+    const chartComponent: Component = {
+      name: "Chart",
+      group: "Charts & Lists",
+      description: "pick from charts",
+      groupPriority: 10,
+      templates: []
+    };
+
+    gridComponent.templates.push(gridTemplate, editGridTemplate);
+    projectLibrary.templates.push(gridTemplate, editGridTemplate);
+    projectLibrary.components.push(gridComponent, chartComponent)
+    //#endregion test setup
+
+    const addedComponents: any[] = [];
 
     return chain([
       (tree: Tree, context: IgxSchematicContext): Observable<Tree> => {
@@ -85,19 +124,11 @@ export function newProject(options: OptionsSchema): Rule {
           move(options.name),
         ]), MergeStrategy.Overwrite
       ),
-      (tree: Tree, context: IgxSchematicContext) => {
-        context.engine.executePostTasks()
-        // tree.commitUpdate();
-        return defer<Tree>(async function() {
-          const prompt = new PromptSession();
-          const test = await prompt.getUserInput({
-            name: 'test',
-            type: 'confirm',
-            message: 'Iz dis after install?'
-          });
-          context.logger.info('' + test);
-          return tree;
-        });
+      chooseActionLoop({ projectLibrary: projectLibrary, rulesChain: addedComponents, projectName: options.name }),
+      (_tree: Tree, _context: IgxSchematicContext) => {
+        if (addedComponents.length) {
+          return chain(addedComponents);
+        }
       },
       (tree: Tree, context: IgxSchematicContext) => {
         if (false) {
@@ -115,14 +146,20 @@ export function newProject(options: OptionsSchema): Rule {
   };
 }
 
-export function chooseActionLoop(options: OptionsSchema): Rule {
-  return (tree: Tree, context: IgxSchematicContext) => {
+interface ActionsOptionsSchema {
+  projectLibrary: ProjectLibrary;
+  rulesChain: Rule[],
+  projectName?: string
+}
+
+export function chooseActionLoop(options: ActionsOptionsSchema): Rule {
+  return (tree: Tree, _context: IgxSchematicContext) => {
     return defer<Tree>(async function() {
       const prompt = new PromptSession();
       let actionIsOver = false;
       while (!actionIsOver) {
         const actionChoices: Array<{}> = prompt.generateActionChoices(options.projectLibrary);
-        Util.log(""); /* new line */
+        // Util.log(""); /* new line */
         const action: string = await prompt.getUserInput({
           type: "list",
           name: "action",
@@ -133,37 +170,43 @@ export function chooseActionLoop(options: OptionsSchema): Rule {
     
         switch (action) {
           case "Add component": {
-            actionIsOver = await prompt.addComponent(options.projectLibrary, options.theme);
-            options.rulesChain.push(schematic("component"), {/*options.projectLibrary, options.theme*/});
+            const addedTemplates: any[] = [];
+            actionIsOver = await prompt.addComponent(options.projectLibrary, addedTemplates);
+            options.rulesChain.push(schematic("component", {
+              name: addedTemplates[0].name,
+              template: addedTemplates[0].template,
+              projectName: options.projectName
+            }));
             break;
           }
           case "Add scenario": {
-            actionIsOver = await prompt.addView(options.projectLibrary, options.theme);
-            options.rulesChain.push(schematic("component"), {/*options.projectLibrary, options.theme*/});
+            // actionIsOver = await prompt.addView(options.projectLibrary, options.theme);
+            // options.rulesChain.push(schematic("component"), {/*options.projectLibrary, options.theme*/});
             break;
           }
           case "Complete & Run":
-            const config = ProjectConfig.localConfig();
-            const defaultPort = config.project.defaultPort;
-            let port;
-            let userPort: boolean;
-            while (!userPort) {
-              // tslint:disable-next-line:prefer-const
-              port = await prompt.getUserInput({
-                default: defaultPort,
-                message: "Choose app host port:",
-                name: "port",
-                type: "input"
-              });
+            // const config = ProjectConfig.localConfig();
+            // const defaultPort = config.project.defaultPort;
+            // let port;
+            // let userPort: boolean;
+            // while (!userPort) {
+            //   // tslint:disable-next-line:prefer-const
+            //   port = await prompt.getUserInput({
+            //     default: defaultPort,
+            //     message: "Choose app host port:",
+            //     name: "port",
+            //     type: "input"
+            //   });
     
-              if (!Number(port)) {
-                Util.log(`port should be a number. Input valid port or use the suggested default port`, "yellow");
-              } else {
-                userPort = true;
-                config.project.defaultPort = port;
-                ProjectConfig.setConfig(config);
-              }
-            }
+            //   if (!Number(port)) {
+            //     Util.log(`port should be a number. Input valid port or use the suggested default port`, "yellow");
+            //   } else {
+            //     userPort = true;
+            //     config.project.defaultPort = port;
+            //     ProjectConfig.setConfig(config);
+            //   }
+            // }
+            break;
           default: {
             break;
           }

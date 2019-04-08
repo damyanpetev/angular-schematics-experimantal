@@ -18,6 +18,7 @@
     "@types/inquirer": "0.0.44",
     "@types/jasmine": "^3.0.0",
     "@types/node": "^8.0.31",
+    "chalk": "^2.4.2",
     "inquirer": "^6.2.2",
     "jasmine": "^3.0.0",
     "rxjs": "^6.3.3",
