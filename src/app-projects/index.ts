@@ -46,23 +46,20 @@ export default function (options: any): Rule {
       //                     extension), does not support additional functions if you don't pass
       //                     them in, and only work on text files (we use an algorithm to detect
       //                     if a file is binary or not).
-      mergeWith(apply(url('./files'), [
-        filter(path => !path.endsWith('partial.json')),
-        (host: Tree, _context: SchematicContext) => {
-          console.log("./files", host.root.subfiles, host.root.path);
-        },
-        // applyTemplates (unlike template) removes the `.template` ext
-        applyTemplates({
-          INDEX: options.index,
-          name: options.name,
-          theme: options.theme
-        })
-      ],
+      mergeWith(
+        apply(url('./files'), [
+          filter(path => !path.endsWith('partial.json')),
+          // applyTemplates (unlike template) removes the `.template` ext
+          applyTemplates({
+            INDEX: options.index,
+            name: options.name,
+            theme: options.theme
+          })
+        ],
       ), MergeStrategy.Overwrite),
       mergeWith(apply(url('./files'), [
         filter(path => path.endsWith('partial.json') && tree.exists(path.replace('.partial', ''))),
         forEach(file => {
-          console.log(file.path, tree.exists(file.path.replace('.partial', '')));
           const filePath = file.path.replace('.partial', '');
           let content = JSON.parse(tree.read(filePath)!.toString());
           const partial = JSON.parse(file.content.toString());
