@@ -171,7 +171,7 @@ export function chooseActionLoop(options: ActionsOptionsSchema): Rule {
         switch (action) {
           case "Add component": {
             const addedTemplates: any[] = [];
-            actionIsOver = await prompt.addComponent(options.projectLibrary, addedTemplates);
+            await prompt.addComponent(options.projectLibrary, addedTemplates);
             options.rulesChain.push(schematic("component", {
               name: addedTemplates[0].name,
               template: addedTemplates[0].template,
@@ -185,6 +185,7 @@ export function chooseActionLoop(options: ActionsOptionsSchema): Rule {
             break;
           }
           case "Complete & Run":
+            actionIsOver = true;
             // const config = ProjectConfig.localConfig();
             // const defaultPort = config.project.defaultPort;
             // let port;
